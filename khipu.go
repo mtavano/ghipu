@@ -25,7 +25,7 @@ func NewKhipuClient(secret, receiverID string) *Khipu {
 }
 
 // Banks ...
-func (kc *Khipu) Banks() (*http.Response, error) {
+func (kc *Khipu) Banks() ([]*Bank, error) {
 	requestPath := basePath + "/banks"
 	req, err := http.NewRequest("GET", requestPath, nil)
 	if err != nil {
@@ -42,5 +42,14 @@ func (kc *Khipu) Banks() (*http.Response, error) {
 		return nil, fmt.Errorf(fmt.Sprintf("failed to made request to %s\n%s", requestPath, err))
 	}
 
-	return res, nil
+	payload := new(struct {
+		Banks []*Bank `json:"banks"`
+	})
+
+	err = unmarshalJSON(res.Body, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return payload.Banks, nil
 }
