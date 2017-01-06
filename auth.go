@@ -1,49 +1,61 @@
 package gokhipu
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"net/url"
 	"sort"
+	"strings"
 )
 
 func setAuth(params map[string]string, method, uri, secret, receicerID string) string {
-	toSign := url.QueryEscape(method) + "&" + url.QueryEscape(uri) + setParams(params)
+	var buff bytes.Buffer
+	buff.WriteString(url.QueryEscape(method))
+	buff.WriteString("&")
+	buff.WriteString(url.QueryEscape(uri))
+	buff.WriteString(makeParams(params))
+
 	sign := hmac.New(sha256.New, []byte(secret))
-	sign.Write([]byte(toSign))
+	sign.Write(buff.Bytes())
 	return receicerID + ":" + hex.EncodeToString(sign.Sum(nil))
 }
 
-func setParams(params map[string]string) string {
-	var qs string
-
+func makeParams(params map[string]string) string {
 	if params == nil {
-		return qs
+		return ""
 	}
 
-	m := sortKeys(params)
+	v := sortKeys(params)
+	u := url.Values{}
 
-	for k, v := range m {
-		qs += "&" + k + "=" + v
+	for i := range v {
+		if params[v[i]] == "" {
+			continue
+		}
+		u.Add(v[i], params[v[i]])
 	}
-	return qs
+
+	var urlParams *url.URL
+	urlParams, err := url.Parse("")
+	if err != nil {
+		return ""
+	}
+	urlParams.RawQuery = u.Encode()
+	return "&" + strings.Replace(urlParams.String(), "+", "%20", -1)[1:]
 }
 
-func sortKeys(m map[string]string) map[string]string {
-	keys := make([]string, len(m))
+func sortKeys(m map[string]string) []string {
+	sortedKeys := make([]string, len(m))
 
 	i := 0
 	for k := range m {
-		keys[i] = k
+		sortedKeys[i] = k
 		i++
 	}
 
-	sort.Strings(keys)
+	sort.Strings(sortedKeys)
 
-	mm := make(map[string]string)
-	for _, k := range keys {
-		mm[k] = m[k]
-	}
-	return mm
+	return sortedKeys
 }
