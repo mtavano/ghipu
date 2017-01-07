@@ -1,19 +1,13 @@
 package gokhipu
 
 import (
-	"strconv"
 	"time"
+
+	"github.com/mtavano/go-khipu/utils"
 )
 
 // Payment represents the payment form requires by khipu to make a payment POST
 type Payment struct {
-
-	// Debt collector information
-	// Payer contact information related
-	// Required information
-	// Restrict payer
-	// URLs
-	//ExpiresDate      time.Time `json:"expires_date,omitempty"`
 	Amount                       string `json:"amount"`
 	BankID                       string `json:"bank_id,omitempty"`
 	Body                         string `json:"body,omitempty"`
@@ -25,7 +19,7 @@ type Payment struct {
 	IntegratorFee                string `json:"integrator_fee,omitempty"`
 	NotifyAPIVersion             string `json:"notify_api_verion,omitempty"`
 	NotifyURL                    string `json:"notify_url,omitempty"`
-	PayerEmail                   string `json:"payer_email,omitempty"` // if exists, the rest of fields are required
+	PayerEmail                   string `json:"payer_email,omitempty"`
 	PayerName                    string `json:"payer_name,omitempty"`
 	PictureURL                   string `json:"picture_url,omitempty"`
 	ResponsibleUserEmail         string `json:"responsible_user_email,omitempty"`
@@ -44,8 +38,8 @@ func (p *Payment) Params() map[string]string {
 		"amount":                          p.Amount,
 		"payer_email":                     p.PayerEmail,
 		"payer_name":                      p.PayerName,
-		"send_email":                      setEmptyIfFalse(p.SendEmail),
-		"send_reminders":                  setEmptyIfFalse(p.SendReminders),
+		"send_email":                      utils.SetEmptyIfFalse(p.SendEmail),
+		"send_reminders":                  utils.SetEmptyIfFalse(p.SendReminders),
 		"fixed_payer_personal_identifier": p.FixedPayerPersonalIdentifier,
 		"responsible_user_email":          p.ResponsibleUserEmail,
 		"transaction_id":                  p.TransactionID,
@@ -61,15 +55,6 @@ func (p *Payment) Params() map[string]string {
 		//"expires_date":                    p.ExpiresDate.String(),
 		"integrator_fee": p.IntegratorFee,
 	}
-}
-
-func setEmptyIfFalse(b bool) string {
-	s := string(strconv.AppendBool(make([]byte, 0), b))
-	if s != "false" {
-		return s
-	}
-
-	return ""
 }
 
 // PaymentResponse represets the information returnes by khipu's api after a payment action
