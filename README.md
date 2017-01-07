@@ -1,5 +1,5 @@
 # Ghipu
-**Ghipu** is an awesome tool to integrate with Khipu's API.
+**Ghipu** is an awesome tool to integrate your web service with Khipu's API.
 
 
 ## Overview
