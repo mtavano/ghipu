@@ -18,6 +18,3 @@
 - [ ] **DELETE /payments/{id}**
 - [ ] **POST /payments/{id}/refunds**
 - [ ] **POST /receivers**
-
-
-1. 
