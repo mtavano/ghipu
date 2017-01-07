@@ -15,7 +15,7 @@
 - [x] **GET /banks**
 - [ ] **GET /payments**
 - [x] **POST /Payments**
-- [ ] **GET /payments/{id}**
+- [x] **GET /payments/{id}**
 - [ ] **DELETE /payments/{id}**
 - [ ] **POST /payments/{id}/refunds**
 - [ ] **POST /receivers**
