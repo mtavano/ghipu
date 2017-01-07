@@ -1,4 +1,4 @@
-package gokhipu
+package ghipu
 
 // Bank represents the schema of bank defined by khipu
 type Bank struct {

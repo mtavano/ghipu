@@ -1,4 +1,4 @@
-package gokhipu
+package ghipu
 
 import (
 	"bytes"
