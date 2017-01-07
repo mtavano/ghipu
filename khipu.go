@@ -2,10 +2,6 @@ package ghipu
 
 import "net/http"
 
-var (
-	basePath = "https://khipu.com/api/2.0"
-)
-
 // KhipuClient implements a basic struct with revelant data to handle
 // khipu's API requests.
 type KhipuClient struct {

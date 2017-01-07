@@ -7,6 +7,10 @@ import (
 	"github.com/mtavano/ghipu/utils"
 )
 
+var (
+	basePath = "https://khipu.com/api/2.0"
+)
+
 // GetBanks returns the list of banks availables to make a payment through khipu's API
 func (kc *KhipuClient) GetBanks() ([]*Bank, error) {
 	requestPath := basePath + "/banks"
