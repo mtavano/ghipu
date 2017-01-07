@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mtavano/go-khipu/utils"
+	"github.com/mtavano/ghipu/utils"
 )
 
 // GetBanks returns the list of banks availables to make a payment through khipu's API

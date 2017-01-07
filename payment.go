@@ -3,7 +3,7 @@ package gokhipu
 import (
 	"time"
 
-	"github.com/mtavano/go-khipu/utils"
+	"github.com/mtavano/ghipu/utils"
 )
 
 // Payment represents the payment form requires by khipu to make a payment POST
