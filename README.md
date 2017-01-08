@@ -45,7 +45,11 @@ kc := ghipu.NewKhipuClient("secret", "receiver_id")
 If you want to do a custom request to Khipu's API you can use **Ghipu** in the following way
 
 ```go
-import "github.com/mtavano/ghipu"
+import (
+    "http"
+
+    "github.com/mtavano/ghipu"
+)
 
 // client definition ...
 
