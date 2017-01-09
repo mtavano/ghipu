@@ -32,7 +32,7 @@ go get github.com/mtavano/ghipu
 To use **Ghipu** you only need to get a new client and then start to gets through Khipu's API 
 
 ```go
-import "github.com/mtavano/ghipu
+import "github.com/mtavano/ghipu"
 
 // ...
 
