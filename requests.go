@@ -2,6 +2,7 @@ package ghipu
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/mtavano/ghipu/utils"
@@ -92,6 +93,30 @@ func (kc *KhipuClient) MakePay(p *Payment) (*PaymentResponse, error) {
 	}
 
 	return pr, nil
+}
+
+// MakeRefund ...
+func (kc *KhipuClient) MakeRefund(id string) (*SucessResponse, error) {
+	requestPath := basePath + "/payments/" + id + "/refunds"
+
+	req, err := http.NewRequest("POST", requestPath, nil)
+	if err != nil {
+		return nil, fmt.Errorf(fmt.Sprintf("failed to create request to %s\n%s", requestPath, err))
+	}
+
+	req.Header.Set("Authorization", setAuth(nil, "POST", requestPath, kc.Secret, kc.ReceiverID))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	res, err := kc.DoRequest(req, requestPath)
+	if err != nil {
+		return nil, err
+	}
+
+	b, _ := ioutil.ReadAll(res.Body)
+	fmt.Println(string(b))
+
+	return nil, nil
 }
 
 // DoRequest makes a request to khipu's API using theyr schema
