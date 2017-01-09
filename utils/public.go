@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
-	"strconv"
 	"strings"
 )
 
@@ -36,9 +35,8 @@ func MakeParams(params map[string]string) string {
 
 // SetEmptyIfFalse returns a zero string value if b is false
 func SetEmptyIfFalse(b bool) string {
-	s := string(strconv.AppendBool(make([]byte, 0), b))
-	if s != "false" {
-		return s
+	if b {
+		return "true"
 	}
 
 	return ""
