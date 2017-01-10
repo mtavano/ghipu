@@ -1,10 +1,6 @@
 package ghipu
 
-import (
-	"time"
-
-	"github.com/mtavano/ghipu/utils"
-)
+import "time"
 
 // Payment represents the payment form requires by khipu to make a payment POST
 type Payment struct {
@@ -38,8 +34,8 @@ func (p *Payment) Params() map[string]string {
 		"amount":                          p.Amount,
 		"payer_email":                     p.PayerEmail,
 		"payer_name":                      p.PayerName,
-		"send_email":                      utils.SetEmptyIfFalse(p.SendEmail),
-		"send_reminders":                  utils.SetEmptyIfFalse(p.SendReminders),
+		"send_email":                      setEmptyIfFalse(p.SendEmail),
+		"send_reminders":                  setEmptyIfFalse(p.SendReminders),
 		"fixed_payer_personal_identifier": p.FixedPayerPersonalIdentifier,
 		"responsible_user_email":          p.ResponsibleUserEmail,
 		"transaction_id":                  p.TransactionID,
@@ -52,42 +48,36 @@ func (p *Payment) Params() map[string]string {
 		"notify_url":                      p.NotifyURL,
 		"contact_url":                     p.ContactURL,
 		"notify_api_version":              p.NotifyAPIVersion,
-		//"expires_date":                    p.ExpiresDate.String(),
-		"integrator_fee": p.IntegratorFee,
+		"integrator_fee":                  p.IntegratorFee,
 	}
+}
+
+func setEmptyIfFalse(b bool) string {
+	if b {
+		return "true"
+	}
+
+	return ""
 }
 
 // PaymentResponse represets the information returnes by khipu's api after a payment action
 type PaymentResponse struct {
-	PaymentID string `json:"payment_id,omitempty"`
-
-	//Payer information and its bank
-	Bank               string `json:"bank,omitempty"`
-	BankAccountNumber  string `json:"bank_account_number,omitempty"`
-	PersonalIdentifier string `json:"personal_identifier,omitempty"`
-
-	// Payment status information
+	AppURL                string    `json:"app_url,omitempty"`
+	AttachmentURLS        []string  `json:"attachment_urls,omitempty"`
+	Bank                  string    `json:"bank,omitempty"`
+	BankAccountNumber     string    `json:"bank_account_number,omitempty"`
+	ConciliationDate      time.Time `json:"conciliation_date,omitempty"`
+	NotificationToken     string    `json:"notification_token,omitempty"`
+	OutOfDateConciliation bool      `json:"aout_of_date_conciliation,omitempty"`
 	Payment
-	Status       string `json:"status,omitempty"` // pending, verifying, done
-	StatusDetail string `json:"status_detail,omitempty"`
-
-	// Identifies the debt collector account
-	ReceiverID string `json:"reveiver_id,omitempty"`
-
-	// URLs
-	PaymentURL            string   `json:"payment_url,omitempty"`
-	SimplifiedTransferURL string   `json:"simplified_tranfer_url,omitempty"`
-	TransferURL           string   `json:"transfer_url,omitempty"`
-	AppURL                string   `json:"app_url,omitempty"`
-	ReceiptURL            string   `json:"receipt_url,omitempty"`
-	AttachmentURLS        []string `json:"attachment_urls,omitempty"`
-
-	ReadyForTerminal bool `json:"ready_for_terminal,omitempty"`
-
-	// Token that identifies a payment to allerts if it was succesfully done
-	NotificationToken string `json:"notification_token,omitempty"`
-
-	ConciliationDate time.Time `json:"conciliation_date,omitempty"`
-
-	OutOfDateConciliation bool `json:"aout_of_date_conciliation,omitempty"`
+	PaymentID             string `json:"payment_id,omitempty"`
+	PaymentURL            string `json:"payment_url,omitempty"`
+	PersonalIdentifier    string `json:"personal_identifier,omitempty"`
+	ReadyForTerminal      bool   `json:"ready_for_terminal,omitempty"`
+	ReceiptURL            string `json:"receipt_url,omitempty"`
+	ReceiverID            string `json:"reveiver_id,omitempty"`
+	SimplifiedTransferURL string `json:"simplified_tranfer_url,omitempty"`
+	Status                string `json:"status,omitempty"`
+	StatusDetail          string `json:"status_detail,omitempty"`
+	TransferURL           string `json:"transfer_url,omitempty"`
 }

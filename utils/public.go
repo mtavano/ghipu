@@ -33,15 +33,6 @@ func MakeParams(params map[string]string) string {
 	return "&" + strings.Replace(urlParams.String(), "+", "%20", -1)[1:]
 }
 
-// SetEmptyIfFalse returns a zero string value if b is false
-func SetEmptyIfFalse(b bool) string {
-	if b {
-		return "true"
-	}
-
-	return ""
-}
-
 // MakeForm return the http form to send on request
 func MakeForm(m map[string]string) *strings.Reader {
 	vals := url.Values{}
