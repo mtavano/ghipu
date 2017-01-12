@@ -67,6 +67,30 @@ func (kc *KhipuClient) GetPayment(id string) (*PaymentResponse, error) {
 	return pr, nil
 }
 
+// GetPaymentStatus fetch the payment status asociated to the notification token gicen by khipu
+func (kc *KhipuClient) GetPaymentStatus(notificationToken string) (*PaymentResponse, error) {
+	requestPath := fmt.Sprintf("%s/payments", basePath)
+
+	req, err := http.NewRequest("GET", requestPath+"?notification_token="+notificationToken, nil)
+	if err != nil {
+		return nil, fmt.Errorf(fmt.Sprintf("failed to create request to %s\n%s", requestPath, err))
+	}
+
+	req.Header.Set("Authorization", setAuth(map[string]string{"notification_token": notificationToken}, "GET", requestPath, kc.Secret, kc.ReceiverID))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	res, err := kc.DoRequest(req, requestPath)
+	if err != nil {
+		return nil, err
+	}
+
+	b, _ := ioutil.ReadAll(res.Body)
+	fmt.Println(string(b))
+
+	return nil, nil
+}
+
 // MakePay makes a pay through a POST calls to khipu's API and return the PaymentResponse
 // Given by Khipu's API
 func (kc *KhipuClient) MakePay(p *Payment) (*PaymentResponse, error) {
