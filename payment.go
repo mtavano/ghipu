@@ -1,6 +1,89 @@
 package ghipu
 
-import "time"
+import (
+	"encoding/json"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"time"
+)
+
+type PaymentService struct {
+	client *httpClient
+}
+
+func NewPaymentService(secret, receiverID string) *PaymentService {
+	client := httpClient{
+		client: &http.Client{},
+		secret: secret,
+		recid:  receiverID,
+	}
+	return &PaymentService{&client}
+}
+
+func (ps *PaymentService) Payment(id string) (*PaymentResponse, error) {
+	path := basePath + "/payments/" + id
+	resp, err := ps.client.Get(path, nil)
+	if err != nil {
+		return nil, err
+	}
+	var pr PaymentResponse
+	if err := unmarshalJSON(resp.Body, &pr); err != nil {
+		return nil, err
+	}
+	return &pr, nil
+}
+
+func (ps *PaymentService) CreatePayment(p *Payment) (*PaymentResponse, error) {
+	path := basePath + "/payments"
+	resp, err := ps.client.PostForm(path, p.Params())
+	if err != nil {
+		return nil, err
+	}
+	var pr PaymentResponse
+	if err := unmarshalJSON(resp.Body, &pr); err != nil {
+		return nil, err
+	}
+	return &pr, nil
+}
+
+func (ps *PaymentService) Refund(id string) (*PaymentResponse, error) {
+	path := basePath + "/payments/" + id + "/refunds"
+	resp, err := ps.client.PostForm(path, nil)
+	if err != nil {
+		return nil, err
+	}
+	var pr PaymentResponse
+	if err := unmarshalJSON(resp.Body, &pr); err != nil {
+		return nil, err
+	}
+	return &pr, nil
+}
+
+func (ps *PaymentService) PaymentStatus(notificationToken string) (*SuccessResponse, error) {
+	path := basePath + "/payments?notification_token=" + notificationToken
+	values := url.Values{"notification_token": {notificationToken}}
+	resp, err := ps.client.Get(path, values)
+	if err != nil {
+		return nil, err
+	}
+	var sr SuccessResponse
+	if err := unmarshalJSON(resp.Body, &sr); err != nil {
+		return nil, err
+	}
+	return &sr, nil
+}
+
+func unmarshalJSON(r io.ReadCloser, v interface{}) error {
+	defer r.Close()
+
+	body, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, v)
+}
 
 // Payment represents the payment form requires by khipu to make a payment POST
 type Payment struct {
@@ -27,37 +110,36 @@ type Payment struct {
 }
 
 // Params returns a map used to sign the requests
-func (p *Payment) Params() map[string]string {
-	return map[string]string{
-		"subject":                         p.Subject,
-		"currency":                        p.Currency,
-		"amount":                          p.Amount,
-		"payer_email":                     p.PayerEmail,
-		"payer_name":                      p.PayerName,
-		"send_email":                      setEmptyIfFalse(p.SendEmail),
-		"send_reminders":                  setEmptyIfFalse(p.SendReminders),
-		"fixed_payer_personal_identifier": p.FixedPayerPersonalIdentifier,
-		"responsible_user_email":          p.ResponsibleUserEmail,
-		"transaction_id":                  p.TransactionID,
-		"custom":                          p.Custom,
-		"body":                            p.Body,
-		"bank_id":                         p.BankID,
-		"return_url":                      p.ReturnURL,
-		"cancel_url":                      p.CancelURL,
-		"picture_url":                     p.PictureURL,
-		"notify_url":                      p.NotifyURL,
-		"contact_url":                     p.ContactURL,
-		"notify_api_version":              p.NotifyAPIVersion,
-		"integrator_fee":                  p.IntegratorFee,
-	}
-}
-
-func setEmptyIfFalse(b bool) string {
-	if b {
-		return "true"
+func (p *Payment) Params() url.Values {
+	form := url.Values{
+		"subject":                         {p.Subject},
+		"currency":                        {p.Currency},
+		"amount":                          {p.Amount},
+		"payer_email":                     {p.PayerEmail},
+		"payer_name":                      {p.PayerName},
+		"fixed_payer_personal_identifier": {p.FixedPayerPersonalIdentifier},
+		"responsible_user_email":          {p.ResponsibleUserEmail},
+		"transaction_id":                  {p.TransactionID},
+		"custom":                          {p.Custom},
+		"body":                            {p.Body},
+		"bank_id":                         {p.BankID},
+		"return_url":                      {p.ReturnURL},
+		"cancel_url":                      {p.CancelURL},
+		"picture_url":                     {p.PictureURL},
+		"notify_url":                      {p.NotifyURL},
+		"contact_url":                     {p.ContactURL},
+		"notify_api_version":              {p.NotifyAPIVersion},
+		"integrator_fee":                  {p.IntegratorFee},
 	}
 
-	return ""
+	if p.SendEmail {
+		form.Set("send_email", "true")
+	}
+	if p.SendReminders {
+		form.Set("send_reminders", "true")
+	}
+
+	return form
 }
 
 // PaymentResponse represets the information returnes by khipu's api after a payment action
@@ -80,4 +162,9 @@ type PaymentResponse struct {
 	Status                string `json:"status,omitempty"`
 	StatusDetail          string `json:"status_detail,omitempty"`
 	TransferURL           string `json:"transfer_url,omitempty"`
+}
+
+// SuccessResponse represents a success response defined by khipu
+type SuccessResponse struct {
+	Message string `json:"message"`
 }
