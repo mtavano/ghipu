@@ -23,8 +23,7 @@ func NewPaymentService(secret, receiverID string) *PaymentService {
 }
 
 func (ps *PaymentService) Payment(id string) (*PaymentResponse, error) {
-	path := basePath + "/payments/" + id
-	resp, err := ps.client.Get(path, nil)
+	resp, err := ps.client.Get("/payments/"+id, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +35,7 @@ func (ps *PaymentService) Payment(id string) (*PaymentResponse, error) {
 }
 
 func (ps *PaymentService) CreatePayment(p *Payment) (*PaymentResponse, error) {
-	path := basePath + "/payments"
-	resp, err := ps.client.PostForm(path, p.Params())
+	resp, err := ps.client.PostForm("/payments", p.Params())
 	if err != nil {
 		return nil, err
 	}
@@ -49,11 +47,11 @@ func (ps *PaymentService) CreatePayment(p *Payment) (*PaymentResponse, error) {
 }
 
 func (ps *PaymentService) Refund(id string) (*PaymentResponse, error) {
-	path := basePath + "/payments/" + id + "/refunds"
-	resp, err := ps.client.PostForm(path, nil)
+	resp, err := ps.client.PostForm("/payments/"+id+"/refunds", nil)
 	if err != nil {
 		return nil, err
 	}
+
 	var pr PaymentResponse
 	if err := unmarshalJSON(resp.Body, &pr); err != nil {
 		return nil, err
@@ -62,12 +60,13 @@ func (ps *PaymentService) Refund(id string) (*PaymentResponse, error) {
 }
 
 func (ps *PaymentService) PaymentStatus(notificationToken string) (*SuccessResponse, error) {
-	path := basePath + "/payments?notification_token=" + notificationToken
 	values := url.Values{"notification_token": {notificationToken}}
-	resp, err := ps.client.Get(path, values)
+
+	resp, err := ps.client.Get("/payments?"+values.Encode(), values)
 	if err != nil {
 		return nil, err
 	}
+
 	var sr SuccessResponse
 	if err := unmarshalJSON(resp.Body, &sr); err != nil {
 		return nil, err
