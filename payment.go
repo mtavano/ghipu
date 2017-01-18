@@ -2,6 +2,7 @@ package ghipu
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -86,17 +87,20 @@ func unmarshalJSON(r io.ReadCloser, v interface{}) error {
 
 // Payment represents the payment form requires by khipu to make a payment POST
 type Payment struct {
-	Amount                       string `json:"amount"`
+	Amount      float64   `json:"amount"`
+	ExpiresDate time.Time `json:"expires_date,omitempty"`
+
+	NotifyURL  string `json:"notify_url,omitempty"`
+	CancelURL  string `json:"cancel_url,omitempty"`
+	ContactURL string `json:"contact_url,omitempty"`
+
 	BankID                       string `json:"bank_id,omitempty"`
 	Body                         string `json:"body,omitempty"`
-	CancelURL                    string `json:"cancel_url,omitempty"`
-	ContactURL                   string `json:"contact_url,omitempty"`
 	Currency                     string `json:"currency"`
 	Custom                       string `json:"custom,omitempty"`
 	FixedPayerPersonalIdentifier string `json:"fixed_payer_personal_identifier,omitempty"`
 	IntegratorFee                string `json:"integrator_fee,omitempty"`
 	NotifyAPIVersion             string `json:"notify_api_verion,omitempty"`
-	NotifyURL                    string `json:"notify_url,omitempty"`
 	PayerEmail                   string `json:"payer_email,omitempty"`
 	PayerName                    string `json:"payer_name,omitempty"`
 	PictureURL                   string `json:"picture_url,omitempty"`
@@ -104,38 +108,45 @@ type Payment struct {
 	ReturnURL                    string `json:"return_url,omitempty"`
 	SendEmail                    bool   `json:"send_email,omitempty"`
 	SendReminders                bool   `json:"send_reminders,omitempty"`
-	Subject                      string `json:"subject"`
-	TransactionID                string `json:"transaction_id,omitempty"`
+
+	Subject       string `json:"subject"`
+	TransactionID string `json:"transaction_id,omitempty"`
 }
 
 // Params returns a map used to sign the requests
 func (p *Payment) Params() url.Values {
 	form := url.Values{
-		"subject":                         {p.Subject},
-		"currency":                        {p.Currency},
-		"amount":                          {p.Amount},
-		"payer_email":                     {p.PayerEmail},
-		"payer_name":                      {p.PayerName},
+		"subject":  {p.Subject},
+		"currency": {p.Currency},
+		"amount":   {fmt.Sprintf("%.4f", p.Amount)},
+
 		"fixed_payer_personal_identifier": {p.FixedPayerPersonalIdentifier},
 		"responsible_user_email":          {p.ResponsibleUserEmail},
 		"transaction_id":                  {p.TransactionID},
-		"custom":                          {p.Custom},
-		"body":                            {p.Body},
 		"bank_id":                         {p.BankID},
-		"return_url":                      {p.ReturnURL},
-		"cancel_url":                      {p.CancelURL},
-		"picture_url":                     {p.PictureURL},
-		"notify_url":                      {p.NotifyURL},
-		"contact_url":                     {p.ContactURL},
-		"notify_api_version":              {p.NotifyAPIVersion},
-		"integrator_fee":                  {p.IntegratorFee},
+
+		"custom": {p.Custom},
+		"body":   {p.Body},
+
+		"return_url":  {p.ReturnURL},
+		"cancel_url":  {p.CancelURL},
+		"picture_url": {p.PictureURL},
+		"notify_url":  {p.NotifyURL},
+		"contact_url": {p.ContactURL},
+
+		"notify_api_version": {p.NotifyAPIVersion},
+		"integrator_fee":     {p.IntegratorFee},
+	}
+
+	if !p.ExpiresDate.IsZero() {
+		form.Set("expires_date", p.ExpiresDate.Format(time.RFC3339))
 	}
 
 	if p.SendEmail {
-		form.Set("send_email", "true")
-	}
-	if p.SendReminders {
-		form.Set("send_reminders", "true")
+		form.Set("send_email", fmt.Sprint(p.SendEmail))
+		form.Set("payer_name", p.PayerName)
+		form.Set("payer_email", p.PayerEmail)
+		form.Set("send_reminders", fmt.Sprint(p.SendReminders))
 	}
 
 	return form
