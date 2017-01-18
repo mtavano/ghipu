@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strings"
 )
@@ -64,16 +63,10 @@ func (hc *httpClient) Do(req *http.Request, values url.Values) (*http.Response, 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 
-	reqdump, _ := httputil.DumpRequest(req, true)
-	fmt.Printf("%s\n", reqdump)
-
 	resp, err := hc.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("client: %s resquest failed, %v", req.URL, err)
 	}
-
-	respdump, _ := httputil.DumpResponse(resp, false)
-	fmt.Printf("%s\n", respdump)
 
 	switch resp.StatusCode {
 	case http.StatusBadRequest:
@@ -105,15 +98,21 @@ func (hc *httpClient) PostForm(path string, values url.Values) (*http.Response, 
 	return hc.Do(req, values)
 }
 
+var percentEncode = strings.NewReplacer(
+	"+", "%20",
+	"*", "%2A",
+	"%7A", "~",
+)
+
 func (hc *httpClient) signRequest(req *http.Request, values url.Values) {
 	var buff bytes.Buffer
 	buff.WriteString(url.QueryEscape(req.Method))
 	buff.WriteByte('&')
-	buff.WriteString(url.QueryEscape(req.URL.RequestURI()))
+	buff.WriteString(url.QueryEscape(req.URL.String()))
 
 	if values != nil {
 		buff.WriteByte('&')
-		buff.WriteString(strings.Replace(values.Encode(), "+", "%20", -1)[1:])
+		buff.WriteString(percentEncode.Replace(values.Encode()))
 	}
 
 	sig := hmac.New(sha256.New, []byte(hc.secret))
