@@ -4,12 +4,12 @@ import "net/http"
 
 // BankItem represents the schema of bank defined by khipu
 type BankItem struct {
-	BankID    string `json:"bank_id,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Message   string `json:"message,omitempty"`
-	MinAmount string `json:"min_amount,omitempty"`
-	Type      string `json:"type,omitempty"`
-	Parent    string `json:"parent,omitempty"`
+	BankID    string  `json:"bank_id,omitempty"`
+	Name      string  `json:"name,omitempty"`
+	Message   string  `json:"message,omitempty"`
+	MinAmount float64 `json:"min_amount,omitempty"`
+	Type      string  `json:"type,omitempty"`
+	Parent    string  `json:"parent,omitempty"`
 }
 
 // BanksResponse represents schema of banks response.
@@ -21,7 +21,7 @@ type BankService struct {
 	client *httpClient
 }
 
-func NewBankService(secret, receiverID string) *BankService {
+func NewBankService(secret string, receiverID int) *BankService {
 	client := httpClient{
 		client: &http.Client{},
 		secret: secret,

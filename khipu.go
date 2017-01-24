@@ -5,9 +5,13 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -24,7 +28,7 @@ type Client struct {
 }
 
 // NewClient returns an instance of khipu that is the client to make payment request
-func NewClient(secret, receiverID string) *Client {
+func NewClient(secret string, receiverID int) *Client {
 	hclient := httpClient{
 		client: &http.Client{},
 		secret: secret,
@@ -37,24 +41,54 @@ func NewClient(secret, receiverID string) *Client {
 	}
 }
 
-// ErrorResponse represents an error of the Kiphu's REST API.
-type ErrorResponse string
-
-func (err ErrorResponse) Error() string {
-	return "ghipu: " + string(err)
+// AuthorizationError represents an authorization error of the Kiphu's REST API.
+type AuthorizationError struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
 }
 
-// Khipu's REST API errors
-const (
-	ErrInvalidPayload       ErrorResponse = "invalid payload"
-	ErrInvalidAuthorization ErrorResponse = "invalid request"
-	ErrInvalidOperation     ErrorResponse = "invalid operation"
-)
+func (err *AuthorizationError) Error() string {
+	return fmt.Sprintf("ghipu: unauthorized request, %v", err.Message)
+}
+
+// ServiceError represents an service error of the Kiphu's REST API.
+type ServiceError struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
+func (err *ServiceError) Error() string {
+	return fmt.Sprintf("ghipu: unauthorized request, %v", err.Message)
+}
+
+// ErrorItem represents a validation error item.
+type ErrorItem struct{ Field, Message string }
+
+// ValidationError represents an validation error of the Kiphu's REST API.
+type ValidationError struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Errors  []ErrorItem `json:"errors"`
+}
+
+func (err *ValidationError) Error() string {
+	var buff bytes.Buffer
+	buff.WriteString("ghipu: invalid request")
+
+	for _, e := range err.Errors {
+		buff.WriteString(", ")
+		buff.WriteString(e.Field)
+		buff.WriteByte(':')
+		buff.WriteString(e.Message)
+	}
+
+	return buff.String()
+}
 
 type httpClient struct {
 	client *http.Client
 	secret string
-	recid  string
+	recid  int
 }
 
 func (hc *httpClient) Do(req *http.Request, values url.Values) (*http.Response, error) {
@@ -70,11 +104,23 @@ func (hc *httpClient) Do(req *http.Request, values url.Values) (*http.Response, 
 
 	switch resp.StatusCode {
 	case http.StatusBadRequest:
-		return nil, ErrInvalidPayload
+		var valErr ValidationError
+		if err = unmarshalJSON(resp.Body, &valErr); err != nil {
+			return nil, fmt.Errorf("ghipu: error parsing response, %v", err)
+		}
+		return nil, &valErr
 	case http.StatusForbidden:
-		return nil, ErrInvalidAuthorization
+		var authErr AuthorizationError
+		if err = unmarshalJSON(resp.Body, &authErr); err != nil {
+			return nil, fmt.Errorf("ghipu: error parsing response, %v", err)
+		}
+		return nil, &authErr
 	case http.StatusServiceUnavailable:
-		return nil, ErrInvalidOperation
+		var svcErr ServiceError
+		if err = unmarshalJSON(resp.Body, &svcErr); err != nil {
+			return nil, fmt.Errorf("ghipu: error parsing response, %v", err)
+		}
+		return nil, &svcErr
 	default:
 		return resp, nil
 	}
@@ -83,6 +129,15 @@ func (hc *httpClient) Do(req *http.Request, values url.Values) (*http.Response, 
 func (hc *httpClient) Get(path string, values url.Values) (*http.Response, error) {
 	uri := baseURL.String() + path
 	req, err := http.NewRequest(http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, err
+	}
+	return hc.Do(req, values)
+}
+
+func (hc *httpClient) Delete(path string, values url.Values) (*http.Response, error) {
+	uri := baseURL.String() + path
+	req, err := http.NewRequest(http.MethodDelete, uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +163,7 @@ func (hc *httpClient) signRequest(req *http.Request, values url.Values) {
 	var buff bytes.Buffer
 	buff.WriteString(url.QueryEscape(req.Method))
 	buff.WriteByte('&')
-	buff.WriteString(url.QueryEscape(req.URL.String()))
+	buff.WriteString(url.QueryEscape(req.URL.Scheme + "://" + req.URL.Host + req.URL.Path))
 
 	if values != nil {
 		buff.WriteByte('&')
@@ -119,5 +174,21 @@ func (hc *httpClient) signRequest(req *http.Request, values url.Values) {
 	sig.Write(buff.Bytes())
 
 	sign := hex.EncodeToString(sig.Sum(nil))
-	req.Header.Set("Authorization", hc.recid+":"+sign)
+
+	buff.Reset()
+	buff.WriteString(strconv.Itoa(hc.recid))
+	buff.WriteByte(':')
+	buff.WriteString(sign)
+
+	req.Header.Set("Authorization", buff.String())
+}
+
+func unmarshalJSON(r io.ReadCloser, v interface{}) error {
+	defer r.Close()
+
+	body, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, v)
 }
