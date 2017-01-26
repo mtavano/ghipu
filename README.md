@@ -14,12 +14,12 @@
 **Ghipu** has the following server-2-khipu's functions to comunicate with its API.
 
 - [x] `GET /banks`
-- [ ] `GET /payments`
+- [x] `GET /payments`
 - [x] `POST /Payments`
 - [x] `GET /payments/{id}`
-- [ ] `DELETE /payments/{id}`
-- [ ] `POST /payments/{id}/refunds`
-- [ ] `POST /receivers`
+- [x] `DELETE /payments/{id}`
+- [x] `POST /payments/{id}/refunds`
+- [x] `POST /receivers`
 
 ## Instalation
 
