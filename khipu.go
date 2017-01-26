@@ -23,7 +23,7 @@ var baseURL = url.URL{
 
 // Client represents an khipu's REST API.
 type Client struct {
-	PaymentService
+	PaymentsService
 	BankService
 }
 
@@ -36,8 +36,8 @@ func NewClient(secret string, receiverID int) *Client {
 	}
 
 	return &Client{
-		PaymentService: PaymentService{&hclient},
-		BankService:    BankService{&hclient},
+		PaymentsService: PaymentsService{&hclient},
+		BankService:     BankService{&hclient},
 	}
 }
 

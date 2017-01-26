@@ -11,23 +11,23 @@ import (
 	"time"
 )
 
-type PaymentService struct {
+type PaymentsService struct {
 	client *httpClient
 }
 
-func (ps *PaymentService) ReceiverID() int { return ps.client.recid }
-
-func NewPaymentService(secret string, receiverID int) *PaymentService {
+func NewPaymentService(secret string, receiverID int) *PaymentsService {
 	client := httpClient{
 		client: &http.Client{},
 		secret: secret,
 		recid:  receiverID,
 	}
-	return &PaymentService{&client}
+	return &PaymentsService{&client}
 }
 
+func (ps *PaymentsService) ReceiverID() int { return ps.client.recid }
+
 // Payment returns informatin of the payment with the given id.
-func (ps *PaymentService) Payment(id string) (*PaymentResponse, error) {
+func (ps *PaymentsService) Payment(id string) (*PaymentResponse, error) {
 	resp, err := ps.client.Get("/payments/"+id, nil)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (ps *PaymentService) Payment(id string) (*PaymentResponse, error) {
 	return &pr, nil
 }
 
-func (ps *PaymentService) PaymentStatus(notificationToken string) (*PaymentResponse, error) {
+func (ps *PaymentsService) PaymentStatus(notificationToken string) (*PaymentResponse, error) {
 	values := url.Values{"notification_token": {notificationToken}}
 
 	resp, err := ps.client.Get("/payments?"+values.Encode(), values)
@@ -60,7 +60,7 @@ func (ps *PaymentService) PaymentStatus(notificationToken string) (*PaymentRespo
 }
 
 // CreatePayment creates a new payment and returns the URLs to complete the payment.
-func (ps *PaymentService) CreatePayment(p *Payment) (*PaymentCreateResponse, error) {
+func (ps *PaymentsService) CreatePayment(p *Payment) (*PaymentCreateResponse, error) {
 	resp, err := ps.client.PostForm("/payments", p.Params())
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (ps *PaymentService) CreatePayment(p *Payment) (*PaymentCreateResponse, err
 	return &pcr, nil
 }
 
-func (ps *PaymentService) DeletePayment(id string) (*SuccessResponse, error) {
+func (ps *PaymentsService) DeletePayment(id string) (*SuccessResponse, error) {
 	resp, err := ps.client.Delete("/payments/"+id, nil)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (ps *PaymentService) DeletePayment(id string) (*SuccessResponse, error) {
 // carried out in the stores that collect in khipu account and before the surrender of the
 // corresponding funds.
 // If the amount is zero, then the whole amount of the payment is refunded.
-func (ps *PaymentService) Refund(id string, amount float64) (*SuccessResponse, error) {
+func (ps *PaymentsService) Refund(id string, amount float64) (*SuccessResponse, error) {
 	var values url.Values
 	if amount > 0 {
 		values = url.Values{"amount": {fmt.Sprintf("%.4f", amount)}}
