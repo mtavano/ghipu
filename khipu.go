@@ -25,6 +25,7 @@ var baseURL = url.URL{
 type Client struct {
 	PaymentsService
 	BankService
+	ReceiversService
 }
 
 // NewClient returns an instance of khipu that is the client to make payment request
@@ -36,8 +37,9 @@ func NewClient(secret string, receiverID int) *Client {
 	}
 
 	return &Client{
-		PaymentsService: PaymentsService{&hclient},
-		BankService:     BankService{&hclient},
+		PaymentsService:  PaymentsService{&hclient},
+		BankService:      BankService{&hclient},
+		ReceiversService: ReceiversService{&hclient},
 	}
 }
 
